@@ -3,10 +3,12 @@ class Sudoku:
     def __init__(self, stre):
         self.sudoku = [[-1]*9,[-1]*9,[-1]*9,[-1]*9,[-1]*9,[-1]*9,[-1]*9,[-1]*9,[-1]*9]
         self.fixed = [[False]*9,[False]*9,[False]*9,[False]*9,[False]*9,[False]*9,[False]*9,[False]*9,[False]*9]
-
+        
         xi = 0
         y = 0
         for char in stre:
+            if xi > 8:
+                break
             if char == "=":
                 xi = xi + 1
                 y = 0
@@ -50,51 +52,98 @@ class Sudoku:
                 return False
 
         return True
-
-    def is_valid(self):
-        for i in range(9):
-            if not self.valid_in_row(i):
-                return False
-            if not self.valid_in_column(i):
-                return False
+        
+    def valid_in_area(self, x, y):
+        lower_x = x
+        upper_x = x
+        lower_y = y
+        upper_y = y
+        
+        while True:
+            num_valid = 0
+            if lower_x % 3 == 0:
+                num_valid += 1
+            else:
+                lower_x -= 1
+            
+            if (upper_x + 1) % 3 == 0:
+                num_valid += 1
+            else:
+                upper_x += 1
+            
+            if lower_y % 3 == 0:
+                num_valid += 1
+            else:
+                lower_y -= 1
+            
+            if (upper_y + 1) % 3 == 0:
+                num_valid += 1
+            else:
+                upper_y += 1
+                
+            if num_valid == 4:
+                break
+            
+        registered = []
+        
+        for i in range(lower_x, upper_x + 1):
+            for j in range(lower_y, upper_y + 1):
+                if self.sudoku[i][j] == -1:
+                    continue
+                    
+                if self.sudoku[i][j] not in registered:
+                    registered.append(self.sudoku[i][j])
+                else:
+                    return False
+                    
         return True
 
     def solve(self, x=0, y=0):
         if x > 8:
-            return
+            return True;
         elif self.fixed[x][y]:
             if y + 1 > 8:
-                self.solve(x+1, 0)
+                return self.solve(x+1, 0)
             else:
-                self.solve(x, y+1) 
+                return self.solve(x, y+1) 
         else:
+            retval = False;
             for i in range(1, 10):
-                print(self)
                 self.sudoku[x][y] = i
-                if self.valid_in_column(y) and self.valid_in_row(x):
-                    print("sini")
+                if self.valid_in_column(y) and self.valid_in_row(x) and self.valid_in_area(x, y):
                     if y + 1 > 8:
-                        self.solve(x+1, 0)
+                        retval = self.solve(x+1, 0)
                     else:
-                        self.solve(x, y+1)
+                        retval = self.solve(x, y+1)
+                
+                if retval:
+                    return True
+                    
             self.sudoku[x][y] = -1
+            return False
 
 
     def __str__(self):
         ret = ""
-        for row in self.sudoku:
-            for value in row:
-                if value == -1:
-                    ret += "-"
+        for i in range(0, 9):
+            if i % 3 == 0 and i != 0:
+                ret += "---------------------\n"
+            for j in range(0, 9):
+                if j % 3 == 0 and j != 0:
+                    ret += "| "
+                
+                if self.sudoku[i][j] == -1:
+                    ret += "-";
                 else:
-                    ret += str(value)
+                    ret += str(self.sudoku[i][j])
                 ret += " "
             ret += "\n"
+        ret += "\n\n"
 
         return ret
 
 if __name__ == "__main__":
-    inp = input()
+    inp = open('input.txt', 'r').read()
     sudoku = Sudoku(inp)
     print(sudoku)
     sudoku.solve()
